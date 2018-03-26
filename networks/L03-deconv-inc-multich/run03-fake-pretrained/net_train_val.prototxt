@@ -1,0 +1,186 @@
+name: "NET_01"
+
+layer {
+  name: "data"
+  type: "HDF5Data"
+  top: "data"
+  hdf5_data_param {
+    source: "train.files"
+    batch_size: 4
+  }
+  include: { phase: TRAIN }
+}
+layer {
+  name: "labels"
+  type: "HDF5Data"
+  top: "labels"
+  hdf5_data_param {
+    source: "train.files"
+    batch_size: 4
+  }
+  include: { phase: TRAIN }
+}
+layer {
+  name: "data"
+  type: "HDF5Data"
+  top: "data"
+  hdf5_data_param {
+    source: "test.files"
+    batch_size: 4
+  }
+  include: { phase: TEST }
+}
+layer {
+  name: "labels"
+  type: "HDF5Data"
+  top: "labels"
+  hdf5_data_param {
+    source: "test.files"
+    batch_size: 4
+  }
+  include: { phase: TEST }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "data"
+  top: "conv1"
+
+  param { lr_mult: 1,
+       decay_mult: 1}
+  param { lr_mult: 1,
+       decay_mult: 0}
+  convolution_param {
+    bias_term: true
+    kernel_size: 3
+    num_output: 80
+    stride: 2
+    pad: 1
+    group: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "conv1-relu"
+  type: "ReLU"
+  bottom: "conv1"
+  top: "conv1"
+}
+layer {
+  name: "conv2"
+  type: "Convolution"
+  bottom: "conv1"
+  top: "conv2"
+
+  param { lr_mult: 1,
+       decay_mult: 1}
+  param { lr_mult: 1,
+       decay_mult: 0}
+  convolution_param {
+    bias_term: true
+    kernel_size: 5
+    num_output: 160
+    stride: 2
+    pad: 2
+    group: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "conv2-relu"
+  type: "ReLU"
+  bottom: "conv2"
+  top: "conv2"
+}
+layer {
+  name: "conv3"
+  type: "Convolution"
+  bottom: "conv2"
+  top: "conv3"
+
+  param { lr_mult: 1,
+       decay_mult: 1}
+  param { lr_mult: 1,
+       decay_mult: 0}
+  convolution_param {
+    bias_term: true
+    kernel_size: 7
+    num_output: 320
+    stride: 1
+    pad: 3
+    group: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "conv3-relu"
+  type: "ReLU"
+  bottom: "conv3"
+  top: "conv3"
+}
+
+layer {
+  name: 'conv_out'
+  type: "Deconvolution"
+  bottom: 'conv3'
+  top: 'conv_out'
+  param { lr_mult: 1,
+       decay_mult: 1}
+  param { lr_mult: 1,
+       decay_mult: 0}
+
+  convolution_param {
+    bias_term: true
+    kernel_size: 10
+    num_output: 2
+    stride: 4
+    pad: 3
+    group: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  name: "loss"
+  top: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "conv_out"
+  bottom: "labels"
+#  loss_param{
+#    ignore_label: 1
+#  }
+  loss_weight: 1
+}
+
+layer {
+  name: "accuracy"
+  top: "accuracy"
+  type: "Accuracy"
+  bottom: "conv_out"
+  bottom: "labels"
+}
